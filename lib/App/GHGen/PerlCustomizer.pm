@@ -377,17 +377,20 @@ sub generate_custom_perl_workflow($opts = {}) {
 	$yaml .= "        shell: perl {0}\n";
 	$yaml .= "        run: |\n";
 	$yaml .= <<'VERSION_STEP';
-          use Digest::MD5;
           use Config;
-          use File::Basename qw(dirname);
-          my $ctx = Digest::MD5->new;
-          open(my $exe, '<:raw', $^X) and $ctx->addfile($exe);
+          my @paths = ($^X);
           if ($^O eq 'MSWin32' && $Config{libperl}) {
-              my $dll = dirname($^X) . '/' . $Config{libperl};
-              open(my $fh, '<:raw', $dll) and $ctx->addfile($fh) if -f $dll;
+              (my $dir = $^X) =~ s{[\\/][^\\/]+$}{};
+              my $dll = "$dir/$Config{libperl}";
+              push @paths, $dll if -f $dll;
           }
-          open my $out, '>>', $ENV{GITHUB_OUTPUT} or die $!;
-          print $out "version=" . $ctx->hexdigest . "\n";
+          my $sum = 0;
+          for my $path (@paths) {
+              open(my $fh, '<:raw', $path) or next;
+              $sum += unpack('%32C*', $_) while read $fh, $_, 65536;
+          }
+          open(my $out, '>>', $ENV{GITHUB_OUTPUT}) or die $!;
+          print $out "version=$Config{version}-$Config{archname}-$sum\n";
 
 VERSION_STEP
 
