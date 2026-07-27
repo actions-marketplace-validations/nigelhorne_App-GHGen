@@ -15,6 +15,10 @@ Revision history for App-GHGen
 	- Removed .github/workflows/perl-ci.yml from the cache key. Including the workflow file
 	  hash caused unnecessary full cache invalidation on every comment or whitespace edit to
 	  the workflow; it provided no meaningful safety guarantee beyond the cpanfile hash.
+	- Strengthened the cache key further: a dedicated cross-platform step (shell: perl {0})
+	  now writes $Config{version} to GITHUB_OUTPUT before the cache step runs. The cache key
+	  uses that output (e.g. 5.42.1) rather than the action's perl-version output, which may
+	  only report the minor version (5.42) and therefore not change when a patch build lands.
 
 0.06	Fri Jul 17 11:39:03 EDT 2026
 	[ Bug Fixes ]

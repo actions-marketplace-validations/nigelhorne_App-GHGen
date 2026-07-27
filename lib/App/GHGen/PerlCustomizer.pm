@@ -366,16 +366,27 @@ sub generate_custom_perl_workflow($opts = {}) {
 	$yaml .= "        with:\n";
 	$yaml .= "          perl-version: \${{ matrix.perl }}\n\n";
 
-	# Use the exact binary version from setup-perl (e.g. 5.42.1, not just 5.42) so that
-	# XS DLLs compiled against one patch release are never loaded by a different one.
-	# A mismatch produces "loadable library and perl binaries are mismatched" on Windows.
+	# Ask Perl itself for its exact binary version (e.g. 5.42.1) so the cache key
+	# changes whenever the patch-level build changes, even if the matrix label (5.42)
+	# stays the same.  This prevents XS DLLs compiled against one patch release from
+	# being loaded by a different one, which produces the Windows error:
+	#   "loadable library and perl binaries are mismatched (got handshake key … needed …)"
+	# shell: perl {0} is cross-platform — identical behaviour on Linux, macOS, Windows.
+	$yaml .= "      - name: Get exact Perl binary version for cache key\n";
+	$yaml .= "        id: perl-version\n";
+	$yaml .= "        shell: perl {0}\n";
+	$yaml .= "        run: |\n";
+	$yaml .= "          use Config;\n";
+	$yaml .= "          open my \$fh, '>>', \$ENV{GITHUB_OUTPUT} or die \$!;\n";
+	$yaml .= "          print \$fh \"version=\$Config{version}\\n\";\n\n";
+
 	$yaml .= "      - name: Cache CPAN modules\n";
 	$yaml .= "        uses: actions/cache\@v6\n";
 	$yaml .= "        with:\n";
 	$yaml .= "          path: ~/perl5\n";
-	$yaml .= "          key: \${{ runner.os }}-perl-\${{ steps.setup-perl.outputs.perl-version }}-\${{ hashFiles('cpanfile') }}\n";
+	$yaml .= "          key: \${{ runner.os }}-perl-\${{ steps.perl-version.outputs.version }}-\${{ hashFiles('cpanfile') }}\n";
 	$yaml .= "          restore-keys: |\n";
-	$yaml .= "            \${{ runner.os }}-perl-\${{ steps.setup-perl.outputs.perl-version }}-\n\n";
+	$yaml .= "            \${{ runner.os }}-perl-\${{ steps.perl-version.outputs.version }}-\n\n";
 
 	$yaml .= "      - name: Install cpanm and local::lib\n";
 	$yaml .= "        if: runner.os != 'Windows'\n";

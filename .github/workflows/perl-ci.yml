@@ -49,13 +49,21 @@ jobs:
         with:
           perl-version: ${{ matrix.perl }}
 
+      - name: Get exact Perl binary version for cache key
+        id: perl-version
+        shell: perl {0}
+        run: |
+          use Config;
+          open my $fh, '>>', $ENV{GITHUB_OUTPUT} or die $!;
+          print $fh "version=$Config{version}\n";
+
       - name: Cache CPAN modules
         uses: actions/cache@v6
         with:
           path: ~/perl5
-          key: ${{ runner.os }}-perl-${{ steps.setup-perl.outputs.perl-version }}-${{ hashFiles('cpanfile') }}
+          key: ${{ runner.os }}-perl-${{ steps.perl-version.outputs.version }}-${{ hashFiles('cpanfile') }}
           restore-keys: |
-            ${{ runner.os }}-perl-${{ steps.setup-perl.outputs.perl-version }}-
+            ${{ runner.os }}-perl-${{ steps.perl-version.outputs.version }}-
 
       - name: Install cpanm and local::lib
         if: runner.os != 'Windows'
