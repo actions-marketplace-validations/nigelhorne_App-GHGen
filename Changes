@@ -1,6 +1,6 @@
 Revision history for App-GHGen
 
-0.07
+0.07	Mon Jul 27 15:32:43 EDT 2026
 	[ Bug Fixes ]
 	- Added matrix exclusion for windows-latest + perl 5.40.  The
 	  shogo82148/build-perl perl-5.40.4-thr-win32-x64.zip ships a perl.exe
