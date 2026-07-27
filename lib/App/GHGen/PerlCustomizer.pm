@@ -12,7 +12,7 @@ our @EXPORT_OK = qw(
 	generate_custom_perl_workflow
 );
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 =encoding utf-8
 
@@ -188,20 +188,22 @@ errors are caught across the full version range being tested.
 
 The step uses C<shell: perl {0}>, which works identically on Linux, macOS,
 and Windows without any OS-specific branching.  It searches C<lib/> and
-C<bin/> (falling back to C<.> when neither exists), spawns
-C<perl -Mstrict -Mwarnings -c> for each C<.pm> file found, and exits
-non-zero if any file fails.  B<No additional CPAN modules are required.>
+C<bin/> (falling back to C<.> when neither exists), loads each C<.pm> file
+via C<do $file> with a stub C<@INC> handler that silently satisfies any
+missing C<use> statements, and exits non-zero if any file fails.  Using
+C<do $file> avoids spawning C<perl -c> subprocesses (which have
+Windows command-line quoting issues) and avoids false failures caused by
+missing CPAN dependencies.  B<No additional CPAN modules are required.>
 
 =item C<enable_linter_unused> (boolean, default C<1>)
 
-When true, inserts a B<"Check for unused variables"> step immediately after
-the test run and before Perl::Critic.  The step installs L<warnings::unused>
-from CPAN and runs C<perl -Mwarnings::unused -c> on every C<.pm> file under
-C<lib/>.
-
-This step is conditioned on the latest matrix Perl version and
-C<ubuntu-latest>, matching the Perl::Critic and coverage steps.  It is also
-marked C<continue-on-error: true> because unused-variable warnings can be
+When true, appends an unused-variable check to the B<end of the lint step>
+(i.e. it runs before the test run, not after).  The check installs
+L<warnings::unused> from CPAN, then runs
+C<PERL5OPT=-Mwarnings::unused prove -lr t/> so that variable lifetimes are
+exercised at runtime (C<perl -c> is compile-only and cannot detect unused
+variables).  It is gated on C<RUNNER_OS == Linux> and marked
+C<continue-on-error: true> because unused-variable warnings can be
 legitimately noisy on some codebases.
 
 =item C<enable_critic> (boolean, default C<1>)
@@ -582,7 +584,7 @@ sub _normalize_version($version) {
 	# Convert "5.036" or "5.36" to comparable number
 	$version =~ s/^v?//;
 	my @parts = split /\./, $version;
-	return sprintf("%d.%03d", $parts[0] // 5, $parts[1] // 0);
+	return sprintf('%d.%03d', $parts[0] // 5, $parts[1] // 0);
 }
 
 =head1 LIMITATIONS

@@ -1,6 +1,6 @@
 Revision history for App-GHGen
 
-0.08
+0.07
 	[ Bug Fixes ]
 	- Added matrix exclusion for windows-latest + perl 5.40.  The
 	  shogo82148/build-perl perl-5.40.4-thr-win32-x64.zip ships a perl.exe
@@ -14,18 +14,14 @@ Revision history for App-GHGen
 	  Exclusion is emitted only when both 'windows-latest' and '5.40' are
 	  in the matrix; custom OS or Perl lists that omit either are unaffected.
 	  See https://github.com/shogo82148/actions-setup-perl/issues/2310 for further information.
-
-0.07
-	[ Bug Fixes ]
-	- Fixed "loadable library and perl binaries are mismatched" on Windows even after a
-	  cache miss. Root cause: shogo82148/build-perl bundles pre-compiled XS modules (e.g.
-	  YAML::XS) in the Perl zip. These were compiled against an earlier ABI; cpanm sees
-	  them as "already installed" and skips reinstalling them, leaving a DLL with the wrong
-	  handshake key (got 0000000012c00080, needed 0000000012d00080). Fix: generated
-	  workflows now include a dedicated Windows step "Reinstall YAML::XS against current
-	  Perl" that runs `cpanm --notest --reinstall YAML::XS` after the regular install.
-	  This compiles a fresh YAML::XS.dll into site/lib, which precedes the bundled lib in
-	  @INC, so the correct DLL is always loaded.
+	- Added defensive Windows step "Reinstall YAML::XS against current Perl"
+	  (`cpanm --notest --reinstall YAML::XS`) to ensure a freshly compiled
+	  YAML::XS.dll lands in site/lib (which precedes the bundled lib in @INC)
+	  for cases where the shogo82148 Perl zip bundles a stale XS DLL and the
+	  toolchain (perl.exe + libperl.a) is internally consistent.
+	  Note: this step cannot rescue a distribution where perl.exe and
+	  libperl.a are from different builds — that harder case is addressed in
+	  0.08 via a matrix exclusion.
 	- Removed .github/workflows/perl-ci.yml from the cache key. Including the workflow file
 	  hash caused unnecessary full cache invalidation on every comment or whitespace edit to
 	  the workflow; it provided no meaningful safety guarantee beyond the cpanfile hash.
