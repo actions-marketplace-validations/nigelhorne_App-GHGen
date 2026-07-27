@@ -352,6 +352,17 @@ sub generate_custom_perl_workflow($opts = {}) {
 	for my $version (@perl_versions) {
 		$yaml .= "          - '$version'\n";
 	}
+	# shogo82148/build-perl perl-5.40.4-thr-win32-x64.zip ships a perl.exe and a
+	# libperl540.a from two different builds.  Any XS module compiled against that
+	# libperl540.a (key 0x12c00080) mismatches the running perl.exe (needs
+	# 0x12d00080).  Even Win32::Process (a core Windows XS module bundled in the
+	# zip) fails to load, so no XS-using test can pass on this combination.
+	# Exclude until the upstream distribution is fixed.
+	if ((grep { $_ eq '5.40' } @perl_versions) && (grep { $_ eq 'windows-latest' } @os)) {
+		$yaml .= "        exclude:\n";
+		$yaml .= "          - os: windows-latest\n";
+		$yaml .= "            perl: '5.40'\n";
+	}
 	$yaml .= "    name: Perl \${{ matrix.perl }} on \${{ matrix.os }}\n";
 	$yaml .= "    env:\n";
 	$yaml .= "      AUTOMATED_TESTING: 1\n";
@@ -427,11 +438,14 @@ VERSION_STEP
 	$yaml .= "          cpanm --notest --installdeps .\n\n";
 
 	# The shogo82148 Perl distributions bundle pre-compiled XS modules (e.g.
-	# YAML::XS) that may have been compiled against a different Perl ABI than
-	# the binary in the same zip.  cpanm sees these as "already installed" and
-	# skips them, leaving a DLL with the wrong handshake key.  Force-reinstall
-	# YAML::XS into site/lib (which precedes the bundled lib in @INC) so that
-	# a freshly compiled copy matching the current perl.exe is always used.
+	# YAML::XS) in the Perl zip.  cpanm sees them as "already installed" and
+	# skips recompilation, leaving a DLL that may have the wrong handshake key.
+	# Force-reinstall YAML::XS into site/lib (which precedes the bundled lib in
+	# @INC) to ensure a freshly compiled copy is always used.
+	# NOTE: this step cannot rescue a fundamentally broken distribution where
+	# libperl540.a and perl.exe themselves are from different builds (as in the
+	# shogo82148 perl-5.40.4-thr-win32-x64.zip build) — that case is handled
+	# by the matrix exclusion above.
 	$yaml .= "      - name: Reinstall YAML::XS against current Perl (Windows)\n";
 	$yaml .= "        if: runner.os == 'Windows'\n";
 	$yaml .= "        shell: cmd\n";
