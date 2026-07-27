@@ -16,9 +16,13 @@ Revision history for App-GHGen
 	  hash caused unnecessary full cache invalidation on every comment or whitespace edit to
 	  the workflow; it provided no meaningful safety guarantee beyond the cpanfile hash.
 	- Strengthened the cache key further: a dedicated cross-platform step (shell: perl {0})
-	  now writes $Config{version} to GITHUB_OUTPUT before the cache step runs. The cache key
-	  uses that output (e.g. 5.42.1) rather than the action's perl-version output, which may
-	  only report the minor version (5.42) and therefore not change when a patch build lands.
+	  now hashes the actual Perl binary files (perl.exe + the Perl runtime DLL on Windows,
+	  e.g. perl540.dll) using Digest::MD5 and writes the hex digest to GITHUB_OUTPUT.
+	  The cache key uses that digest instead of $Config{version}.
+	  Rationale: Strawberry Perl occasionally re-releases the same Perl version (e.g. 5.40.0)
+	  with a recompiled DLL that changes the XS handshake key but leaves $Config{version}
+	  unchanged.  Hashing the binary files detects any such change, guaranteeing a cache
+	  miss and a fresh module install when the DLL ABI changes.
 
 0.06	Fri Jul 17 11:39:03 EDT 2026
 	[ Bug Fixes ]

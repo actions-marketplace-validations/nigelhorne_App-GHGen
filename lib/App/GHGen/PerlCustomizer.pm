@@ -366,19 +366,30 @@ sub generate_custom_perl_workflow($opts = {}) {
 	$yaml .= "        with:\n";
 	$yaml .= "          perl-version: \${{ matrix.perl }}\n\n";
 
-	# Ask Perl itself for its exact binary version (e.g. 5.42.1) so the cache key
-	# changes whenever the patch-level build changes, even if the matrix label (5.42)
-	# stays the same.  This prevents XS DLLs compiled against one patch release from
-	# being loaded by a different one, which produces the Windows error:
-	#   "loadable library and perl binaries are mismatched (got handshake key … needed …)"
-	# shell: perl {0} is cross-platform — identical behaviour on Linux, macOS, Windows.
+	# Hash the actual Perl binary files so the cache key changes whenever the
+	# binary changes, even across silent Strawberry Perl re-releases that keep the
+	# same $Config{version} string but change the DLL ABI and handshake key.
+	# On Windows we hash both perl.exe and the Perl runtime DLL (e.g. perl540.dll)
+	# because perl.exe is a thin stub — only the DLL contains the real runtime.
+	# shell: perl {0} runs identically on Linux, macOS, and Windows.
 	$yaml .= "      - name: Get exact Perl binary version for cache key\n";
 	$yaml .= "        id: perl-version\n";
 	$yaml .= "        shell: perl {0}\n";
 	$yaml .= "        run: |\n";
-	$yaml .= "          use Config;\n";
-	$yaml .= "          open my \$fh, '>>', \$ENV{GITHUB_OUTPUT} or die \$!;\n";
-	$yaml .= "          print \$fh \"version=\$Config{version}\\n\";\n\n";
+	$yaml .= <<'VERSION_STEP';
+          use Digest::MD5;
+          use Config;
+          use File::Basename qw(dirname);
+          my $ctx = Digest::MD5->new;
+          open(my $exe, '<:raw', $^X) and $ctx->addfile($exe);
+          if ($^O eq 'MSWin32' && $Config{libperl}) {
+              my $dll = dirname($^X) . '/' . $Config{libperl};
+              open(my $fh, '<:raw', $dll) and $ctx->addfile($fh) if -f $dll;
+          }
+          open my $out, '>>', $ENV{GITHUB_OUTPUT} or die $!;
+          print $out "version=" . $ctx->hexdigest . "\n";
+
+VERSION_STEP
 
 	$yaml .= "      - name: Cache CPAN modules\n";
 	$yaml .= "        uses: actions/cache\@v6\n";
