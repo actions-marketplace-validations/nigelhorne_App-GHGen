@@ -19,9 +19,6 @@ Revision history for App-GHGen
 	  YAML::XS.dll lands in site/lib (which precedes the bundled lib in @INC)
 	  for cases where the shogo82148 Perl zip bundles a stale XS DLL and the
 	  toolchain (perl.exe + libperl.a) is internally consistent.
-	  Note: this step cannot rescue a distribution where perl.exe and
-	  libperl.a are from different builds — that harder case is addressed in
-	  0.08 via a matrix exclusion.
 	- Removed .github/workflows/perl-ci.yml from the cache key. Including the workflow file
 	  hash caused unnecessary full cache invalidation on every comment or whitespace edit to
 	  the workflow; it provided no meaningful safety guarantee beyond the cpanfile hash.
