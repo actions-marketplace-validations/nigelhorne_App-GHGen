@@ -13,6 +13,7 @@ Revision history for App-GHGen
 	  because the compilation itself uses the broken libperl540.a.
 	  Exclusion is emitted only when both 'windows-latest' and '5.40' are
 	  in the matrix; custom OS or Perl lists that omit either are unaffected.
+	  See https://github.com/shogo82148/actions-setup-perl/issues/2310 for further information.
 
 0.07
 	[ Bug Fixes ]

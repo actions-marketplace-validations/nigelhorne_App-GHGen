@@ -585,6 +585,33 @@ sub _normalize_version($version) {
 	return sprintf("%d.%03d", $parts[0] // 5, $parts[1] // 0);
 }
 
+=head1 LIMITATIONS
+
+=head2 Windows + Perl 5.40 excluded from the generated matrix
+
+The shogo82148 C<perl-5.40.4-thr-win32-x64.zip> distribution ships a
+C<perl.exe> and a C<libperl540.a> from two different builds.  Any XS module
+compiled against that C<libperl540.a> receives handshake key
+C<0x12c00080>, but C<perl.exe> needs C<0x12d00080>.  Even
+C<Win32::Process> — a core Windows XS module bundled in the zip and loaded
+transitively by C<IPC::System::Simple> — fails to load with this mismatch,
+so no XS-using test can pass on this combination.
+
+Recompiling XS modules (e.g. via C<cpanm --reinstall YAML::XS>) does not
+help: the compilation itself links against the broken C<libperl540.a> and
+inherits the wrong key.
+
+The generated workflow therefore includes a C<matrix.exclude> entry for
+C<{os: windows-latest, perl: '5.40'}>.  This entry is only emitted when
+both C<windows-latest> and C<5.40> are present in the matrix, so workflows
+that restrict their OS or Perl lists are unaffected.
+
+Remove the exclusion once the upstream shogo82148/build-perl distribution
+is fixed and the C<perl.exe> and C<libperl540.a> in the 5.40.x zip are
+built from the same source tree.
+
+See L<https://github.com/shogo82148/actions-setup-perl/issues/2310> for further information.
+
 =head1 AUTHOR
 
 Nigel Horne E<lt>njh@nigelhorne.comE<gt>
