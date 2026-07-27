@@ -2,8 +2,19 @@ Revision history for App-GHGen
 
 0.07
 	[ Bug Fixes ]
-	- Update the workflow cache to include the Perl configuration hash,
-	  fixes ABI (Application Binary Interface) mismatch between the compiled DBI module and the Perl binaries on Windows
+	- Fixed XS DLL mismatch on Windows ("loadable library and perl binaries are mismatched /
+	  got first handshake key … needed …"). Root cause: the CPAN module cache key used only
+	  the matrix label (e.g. '5.42') rather than the exact binary version installed by
+	  shogo82148/actions-setup-perl. When that action rolls a patch update (5.42.0 → 5.42.1)
+	  with the same minor-version label, the stale XS DLLs are restored from cache and fail
+	  to load against the newer binary. Fix: give the Setup Perl step id: setup-perl and key
+	  the cache on ${{ steps.setup-perl.outputs.perl-version }} (the real installed version,
+	  e.g. 5.42.1). This guarantees a fresh install whenever the Perl binary changes, even
+	  within a minor version. The restore-keys fallback is also scoped to the same binary
+	  version so partial hits (different cpanfile hash) are still safe.
+	- Removed .github/workflows/perl-ci.yml from the cache key. Including the workflow file
+	  hash caused unnecessary full cache invalidation on every comment or whitespace edit to
+	  the workflow; it provided no meaningful safety guarantee beyond the cpanfile hash.
 
 0.06	Fri Jul 17 11:39:03 EDT 2026
 	[ Bug Fixes ]

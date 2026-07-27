@@ -44,6 +44,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup Perl
+        id: setup-perl
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
@@ -52,10 +53,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/perl5
-          key: ${{ runner.os }}-${{ matrix.perl }}-${{ hashFiles('cpanfile') }}-${{ hashFiles('.github/workflows/perl-ci.yml') }}
+          key: ${{ runner.os }}-perl-${{ steps.setup-perl.outputs.perl-version }}-${{ hashFiles('cpanfile') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.perl }}-${{ hashFiles('cpanfile') }}-
-            ${{ runner.os }}-${{ matrix.perl }}-
+            ${{ runner.os }}-perl-${{ steps.setup-perl.outputs.perl-version }}-
 
       - name: Install cpanm and local::lib
         if: runner.os != 'Windows'

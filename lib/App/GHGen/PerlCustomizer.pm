@@ -361,18 +361,21 @@ sub generate_custom_perl_workflow($opts = {}) {
 	$yaml .= "      - uses: actions/checkout\@v7\n\n";
 
 	$yaml .= "      - name: Setup Perl\n";
+	$yaml .= "        id: setup-perl\n";
 	$yaml .= "        uses: shogo82148/actions-setup-perl\@v1\n";
 	$yaml .= "        with:\n";
 	$yaml .= "          perl-version: \${{ matrix.perl }}\n\n";
 
+	# Use the exact binary version from setup-perl (e.g. 5.42.1, not just 5.42) so that
+	# XS DLLs compiled against one patch release are never loaded by a different one.
+	# A mismatch produces "loadable library and perl binaries are mismatched" on Windows.
 	$yaml .= "      - name: Cache CPAN modules\n";
 	$yaml .= "        uses: actions/cache\@v6\n";
 	$yaml .= "        with:\n";
 	$yaml .= "          path: ~/perl5\n";
-	$yaml .= "          key: \${{ runner.os }}-\${{ matrix.perl }}-\${{ hashFiles('cpanfile') }}-\${{ hashFiles('.github/workflows/perl-ci.yml') }}\n";
-        $yaml .= "          restore-keys: |\n";
-        $yaml .= "            \${{ runner.os }}-\${{ matrix.perl }}-\${{ hashFiles('cpanfile') }}-\n";
-        $yaml .= "            \${{ runner.os }}-\${{ matrix.perl }}-\n\n";
+	$yaml .= "          key: \${{ runner.os }}-perl-\${{ steps.setup-perl.outputs.perl-version }}-\${{ hashFiles('cpanfile') }}\n";
+	$yaml .= "          restore-keys: |\n";
+	$yaml .= "            \${{ runner.os }}-perl-\${{ steps.setup-perl.outputs.perl-version }}-\n\n";
 
 	$yaml .= "      - name: Install cpanm and local::lib\n";
 	$yaml .= "        if: runner.os != 'Windows'\n";
