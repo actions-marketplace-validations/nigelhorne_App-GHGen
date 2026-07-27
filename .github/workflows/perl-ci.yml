@@ -100,6 +100,11 @@ jobs:
           set "PERL5LIB=%USERPROFILE%\perl5\lib\perl5"
           cpanm --notest --installdeps .
 
+      - name: Reinstall YAML::XS against current Perl (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: cpanm --notest --reinstall YAML::XS
+
       - name: Lint and syntax check
         shell: perl {0}
         run: |

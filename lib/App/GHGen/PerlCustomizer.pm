@@ -426,6 +426,17 @@ VERSION_STEP
 	$yaml .= "          set \"PERL5LIB=%USERPROFILE%\\perl5\\lib\\perl5\"\n";
 	$yaml .= "          cpanm --notest --installdeps .\n\n";
 
+	# The shogo82148 Perl distributions bundle pre-compiled XS modules (e.g.
+	# YAML::XS) that may have been compiled against a different Perl ABI than
+	# the binary in the same zip.  cpanm sees these as "already installed" and
+	# skips them, leaving a DLL with the wrong handshake key.  Force-reinstall
+	# YAML::XS into site/lib (which precedes the bundled lib in @INC) so that
+	# a freshly compiled copy matching the current perl.exe is always used.
+	$yaml .= "      - name: Reinstall YAML::XS against current Perl (Windows)\n";
+	$yaml .= "        if: runner.os == 'Windows'\n";
+	$yaml .= "        shell: cmd\n";
+	$yaml .= "        run: cpanm --notest --reinstall YAML::XS\n\n";
+
 	if ($enable_linter) {
 		$yaml .= "      - name: Lint and syntax check\n";
 		$yaml .= "        shell: perl {0}\n";
