@@ -369,9 +369,10 @@ sub generate_custom_perl_workflow($opts = {}) {
 	$yaml .= "        uses: actions/cache\@v6\n";
 	$yaml .= "        with:\n";
 	$yaml .= "          path: ~/perl5\n";
-	$yaml .= "          key: \${{ runner.os }}-\${{ matrix.perl }}-\${{ hashFiles('cpanfile') }}\n";
-	$yaml .= "          restore-keys: |\n";
-	$yaml .= "            \${{ runner.os }}-\${{ matrix.perl }}-\n\n";
+	$yaml .= "          key: \${{ runner.os }}-\${{ matrix.perl }}-\${{ hashFiles('cpanfile') }}-\${{ hashFiles('.github/workflows/perl-ci.yml') }}\n";
+        $yaml .= "          restore-keys: |\n";
+        $yaml .= "            \${{ runner.os }}-\${{ matrix.perl }}-\${{ hashFiles('cpanfile') }}-\n";
+        $yaml .= "            \${{ runner.os }}-\${{ matrix.perl }}-\n\n";
 
 	$yaml .= "      - name: Install cpanm and local::lib\n";
 	$yaml .= "        if: runner.os != 'Windows'\n";

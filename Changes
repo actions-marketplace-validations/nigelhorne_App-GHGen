@@ -1,5 +1,10 @@
 Revision history for App-GHGen
 
+0.07
+	[ Bug Fixes ]
+	- Update the workflow cache to include the Perl configuration hash,
+	  fixes ABI (Application Binary Interface) mismatch between the compiled DBI module and the Perl binaries on Windows
+
 0.06	Fri Jul 17 11:39:03 EDT 2026
 	[ Bug Fixes ]
 	- Approved https://github.com/nigelhorne/App-GHGen/pull/6

@@ -30,7 +30,7 @@ inputs:
   perl-version:
     description: 'Perl version to use'
     required: false
-    default: '5.40'
+    default: '5.42'
 
 outputs:
   issues-found:
