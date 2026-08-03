@@ -9,10 +9,15 @@ requires 'YAML::XS';
 
 on 'test' => sub {
 	requires 'IPC::Run3';
+	requires 'IPC::System::Simple';
 	requires 'Test::DescribeMe';
 	requires 'Test::Exception';
-	requires 'Test::More', '0.98';
+	requires 'Test::Mockingbird';
+	requires 'Test::Most';
+	requires 'Test::Returns';
+	requires 'Test::Without::Module';
 };
+
 on 'develop' => sub {
 	requires 'Devel::Cover';
 	requires 'Perl::Critic';

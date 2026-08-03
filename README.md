@@ -1,11 +1,15 @@
 # NAME
 
-App::GHGen - Comprehensive GitHub Actions workflow generator, analyzer, and optimizer
+App::GHGen - GitHub Actions workflow generator, analyzer, and optimizer
+
+# VERSION
+
+Version 0.06
 
 # SYNOPSIS
 
     # Generate workflows
-    ghgen generate --auto                    # Auto-detect project type
+    ghgen generate --auto                   # Auto-detect project type
     ghgen generate --type=perl              # Generate Perl workflow
     ghgen generate --type=perl --customize  # Interactive customization
     ghgen generate --interactive            # Choose type interactively
@@ -32,14 +36,14 @@ reliable part of their development pipeline.
 
 ## Key Features
 
-- **🤖 Auto-detect project type** - Intelligently scans your repository to detect language and dependencies
-- **🚀 Generate optimized workflows** - Creates workflows with caching, security, concurrency, and best practices built-in
-- **🔍 Analyze existing workflows** - Comprehensive analysis for performance, security, cost, and maintenance issues
-- **🔧 Auto-fix issues** - Automatically applies fixes for detected problems (adds caching, updates versions, adds permissions, etc.)
-- **🎯 Interactive customization** - Guided workflow creation with smart defaults and multi-select options
-- **💰 Cost estimation** - Estimates current CI minutes usage and calculates potential savings from optimizations
-- **🔄 GitHub Action integration** - Run as a GitHub Action to analyze PRs, comment with suggestions, and create fix PRs
-- **📊 Per-workflow breakdown** - Detailed analysis of each workflow's cost and optimization potential
+- **Auto-detect project type** - Intelligently scans your repository to detect language and dependencies
+- **Generate optimized workflows** - Creates workflows with caching, security, concurrency, and best practices built-in
+- **Analyze existing workflows** - Comprehensive analysis for performance, security, cost, and maintenance issues
+- **Auto-fix issues** - Automatically applies fixes for detected problems (adds caching, updates versions, adds permissions, etc.)
+- **Interactive customization** - Guided workflow creation with smart defaults and multi-select options
+- **Cost estimation** - Estimates current CI minutes usage and calculates potential savings from optimizations
+- **GitHub Action integration** - Run as a GitHub Action to analyze PRs, comment with suggestions, and create fix PRs
+- **Per-workflow breakdown** - Detailed analysis of each workflow's cost and optimization potential
 
 # INSTALLATION
 
@@ -152,10 +156,12 @@ Customize workflows with guided prompts:
 
 For Perl, you'll be asked:
 
-- **Perl versions to test** - Select from 5.22 through 5.40 (multi-select with defaults)
+- **Perl versions to test** - Select from 5.22 through 5.42 (multi-select with defaults)
 - **Operating systems** - Ubuntu, macOS, Windows (multi-select)
-- **Enable Perl::Critic** - Code quality analysis (yes/no)
-- **Enable Devel::Cover** - Test coverage (yes/no)
+- **Enable syntax linting** - `perl -c` check on all `.pm` files, run across every matrix cell; requires no extra CPAN modules (yes/no, default: yes)
+- **Enable unused-variable check** - `warnings::unused` check, latest Perl + Ubuntu only (yes/no, default: no)
+- **Enable Perl::Critic** - Code quality analysis, latest Perl + Ubuntu only (yes/no, default: yes)
+- **Enable Devel::Cover** - Test coverage, latest Perl + Ubuntu only (yes/no, default: yes)
 - **Branch configuration** - Which branches to run on
 
 Example session:
@@ -180,6 +186,11 @@ Example session:
       ✓ 3. windows-latest
 
     Enter choices [1,2,3]: 1,2
+
+    Code Quality Tools:
+    Enable syntax linting (perl -c on all matrix cells)? [Y/n]: y
+
+    Enable unused-variable check (warnings::unused, latest+ubuntu only)? [y/N]: n
 
     Enable Perl::Critic? [Y/n]: y
     Enable test coverage? [Y/n]: y
@@ -446,28 +457,39 @@ Comprehensive Perl testing with modern best practices.
 **Features:**
 
 - Multi-OS testing (Ubuntu, macOS, Windows)
-- Multiple Perl versions (5.22 through 5.40, customizable)
-- Smart version detection from cpanfile, Makefile.PL, dist.ini
+- Multiple Perl versions (5.22 through 5.42, customizable)
+- Smart minimum-version detection from cpanfile, Makefile.PL, or dist.ini
 - CPAN module caching with local::lib
-- Perl::Critic integration for code quality
-- Devel::Cover for test coverage
+- **Syntax linting** with `perl -c` across every matrix cell — catches compile-time errors on every tested OS and Perl version with no extra CPAN dependencies
+- Optional **unused-variable check** via [warnings::unused](https://metacpan.org/pod/warnings%3A%3Aunused) (latest Perl + Ubuntu only)
+- Perl::Critic integration for code quality (latest Perl + Ubuntu only)
+- Devel::Cover for test coverage (latest Perl + Ubuntu only)
 - Proper environment variables (AUTOMATED\_TESTING, NO\_NETWORK\_TESTING, NONINTERACTIVE\_TESTING)
-- Cross-platform compatibility (bash for Unix, cmd for Windows)
+- Cross-platform compatibility (`shell: perl {0}` for linting; bash/cmd for tests)
 
 **Example:**
 
     ghgen generate --type=perl --customize
 
-**Generated workflow includes:**
+**Generated workflow step order:**
 
-- actions/checkout@v6
-- actions/cache@v5 for CPAN modules
-- shogo82148/actions-setup-perl@v1
-- Matrix testing across OS and Perl versions
-- Conditional Perl::Critic (latest Perl + Ubuntu only)
-- Conditional coverage (latest Perl + Ubuntu only)
-- Security permissions
-- Concurrency controls
+- 1. `actions/checkout@v6`
+- 2. Setup Perl — `shogo82148/actions-setup-perl@v1`
+- 3. Cache CPAN modules — `actions/cache@v6`
+- 4. Install cpanm and `local::lib`
+- 5. Install project dependencies
+- 6. **Lint and syntax check** — all matrix cells (enabled by default); unused-variable check via `PERL5OPT=-Mwarnings::unused` is embedded at the end of this step when `enable_linter_unused` is true (Linux only, non-blocking)
+- 7. Run tests
+- 8. Run Perl::Critic — latest Perl + Ubuntu only (enabled by default)
+- 9. **Check imports with perlimports** — latest Perl + Ubuntu only (enabled by default)
+- 10. Test coverage — latest Perl + Ubuntu only (enabled by default)
+- 11. Show cpanm build log on failure
+
+**Workflow-level features:**
+
+- Security `permissions: contents: read`
+- Concurrency group cancels superseded runs
+- `fail-fast: false` so every matrix cell completes
 
 ## Node.js
 
@@ -892,7 +914,9 @@ Review the remaining suggestions and apply manually.
 
 # SEE ALSO
 
-- [Test Coverage Report](https://nigelhorne.github.io/App-GHGen/coverage/)
+- [GitHub Marketplace Releases](https://github.com/marketplace/actions/ghgen-workflow-analyzer)
+- [Test Dashboard](https://nigelhorne.github.io/App-GHGen/coverage/)
+- [App::Test::Generator](https://metacpan.org/pod/App%3A%3ATest%3A%3AGenerator)
 
 ## GitHub Actions Documentation
 
@@ -906,6 +930,10 @@ Review the remaining suggestions and apply manually.
 - [act](https://github.com/nektos/act) - Run GitHub Actions locally
 - [actionlint](https://github.com/rhysd/actionlint) - Linter for GitHub Actions
 - [yamllint](https://github.com/adrienverge/yamllint) - YAML linter
+
+# REPOSITORY
+
+[https://github.com/nigelhorne/App-GHGen](https://github.com/nigelhorne/App-GHGen)
 
 # CONTRIBUTING
 
@@ -922,7 +950,7 @@ Contributions are welcome! GHGen is open source and hosted on GitHub.
 ## Development Setup
 
     # Fork and clone
-    git clone https://github.com/YOUR-USERNAME/ghgen.git
+    git clone https://github.com/nigelhorne/ghgen.git
     cd ghgen
 
     # Install dependencies
@@ -1001,6 +1029,6 @@ See [https://github.com/nigelhorne/App-GHGen/graphs/contributors](https://github
 
 Copyright 2025-2026 Nigel Horne.
 
-Usage is subject to license terms.
-
-The license terms of this software are as follows:
+Usage is subject to the GPL2 licence terms.
+If you use it,
+please let me know.
