@@ -15,7 +15,7 @@ our @EXPORT_OK = qw(
 	get_cache_suggestion
 );
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 =head1 NAME
 
@@ -456,6 +456,48 @@ sub detect_project_type($workflow) {
 sub min($a, $b) {
     return $a < $b ? $a : $b;
 }
+
+=head2 find_outdated_actions($workflow)
+
+Return a list of human-readable upgrade notices for any action whose version
+string is a key in C<App::GHGen::Fixer::ACTION_UPDATES>.
+
+=head3 Purpose
+
+Detect C<uses:> entries that reference a known-outdated action version.
+The detection set is derived directly from C<%ACTION_UPDATES> in
+C<App::GHGen::Fixer>, so it is always in sync with what C<update_actions>
+can fix: every action flagged here can be auto-fixed, and every action the
+Fixer knows about is flagged here.
+
+=head3 Arguments
+
+=over 4
+
+=item C<$workflow> (HashRef, required)
+
+A parsed workflow hash.
+
+=back
+
+=head3 Returns
+
+A list of strings of the form C<"old/action\@vN E<rarr> new/action\@vM">,
+one per outdated step found.  Returns an empty list when none are detected.
+
+=head3 Side Effects
+
+None.  Pure function.
+
+=head3 FORMAL SPECIFICATION
+
+    find_outdated_actions : Workflow → seq ℤ*
+
+    outdated ≔ { "$old → $new" ∣ job ∈ w.jobs, step ∈ job.steps,
+                  old ∈ dom(%ACTION_UPDATES), step.uses =~ /^\Qold\E/ }
+    result ≔ seq(outdated)
+
+=cut
 
 sub find_outdated_actions($workflow) {
 	my @outdated;

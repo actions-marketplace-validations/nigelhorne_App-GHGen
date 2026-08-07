@@ -12,7 +12,7 @@ our @EXPORT_OK = qw(
 	generate_custom_perl_workflow
 );
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 =encoding utf-8
 
