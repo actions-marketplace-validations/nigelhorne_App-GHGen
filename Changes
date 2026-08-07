@@ -1,6 +1,26 @@
 Revision history for App-GHGen
 
 0.08
+	[ Bug Fixes ]
+	- Fixed false-positive in Analyzer::has_outdated_runners: the unanchored
+	  alternation /ubuntu-18.04|ubuntu-16.04|macos-10\.15/ matched any runner
+	  name that contained those strings as a substring (e.g. a self-hosted runner
+	  named "my-ubuntu-18.04-builder" was incorrectly flagged as outdated).
+	  Anchored with \A...\z so only exact GitHub-hosted runner labels are matched.
+	- Changed greedy (.+) to non-greedy (.+?) in Fixer::fix_unpinned_actions
+	  /^(.+?)\@(?:master|main)$/.  Both forms produce identical captures when
+	  @master or @main appears only once (the common case), because the `$`
+	  anchor forces both to find the same split point.  Non-greedy is preferred
+	  because it reaches a match with fewer backtrack steps on short strings.
+
+	[ Internal ]
+	- Replaced all unnecessary capturing groups with non-capturing (?:...) across
+	  Analyzer.pm, Fixer.pm, CostEstimator.pm, Detector.pm, Interactive.pm, and
+	  bin/ghgen.  Affected patterns: (master|main), (install|ci), (build|test),
+	  (node|python|go|ruby), (npm|pytest|cargo|go), (cpp|cc|cxx|hpp|hxx|h),
+	  y(es)?, n(o)?.  No behaviour change; removes pointless capture-register
+	  allocation on every match.
+
 	[ Enhancements ]
 	- Update to shogo82148/actions-setup-perl@v1.42.0
 
