@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Auto-generated mutant test stubs
-# Generated: 2026-08-06 01:27:47
+# Generated: 2026-08-07 14:18:11
 # Generator: scripts/test-generator-index
 #
 # DO NOT COMMIT without completing the TODO sections.

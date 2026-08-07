@@ -102,8 +102,8 @@ sub prompt_yes_no($question, $default = 'y') {
 	print "$question $prompt: ";
 	chomp(my $answer = <STDIN>);
 
-	return 1 if $answer =~ /^y(es)?$/i;
-	return 0 if $answer =~ /^n(o)?$/i;
+	return 1 if $answer =~ /^y(?:es)?$/i;
+	return 0 if $answer =~ /^n(?:o)?$/i;
 	return $default eq 'y' ? 1 : 0;
 }
 

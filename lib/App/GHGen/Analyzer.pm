@@ -398,7 +398,7 @@ sub find_unpinned_actions($workflow) {
         my $steps = $job->{steps} or next;
         for my $step (@$steps) {
             next unless $step->{uses};
-            if ($step->{uses} =~ /\@(master|main)$/) {
+            if ($step->{uses} =~ /\@(?:master|main)$/) {
                 push @unpinned, $step->{uses};
             }
         }
@@ -429,7 +429,7 @@ sub has_outdated_runners($workflow) {
 
     for my $job (values %$jobs) {
         my $runs_on = $job->{'runs-on'} or next;
-        return 1 if $runs_on =~ /ubuntu-18\.04|ubuntu-16\.04|macos-10\.15/;
+        return 1 if $runs_on =~ /\A(?:ubuntu-(?:18|16)\.04|macos-10\.15)\z/;
     }
     return 0;
 }
@@ -443,9 +443,9 @@ sub detect_project_type($workflow) {
         my $steps = $job->{steps} or next;
         for my $step (@$steps) {
             my $run = $step->{run} // '';
-            return 'npm' if $run =~ /npm (install|ci)/;
+            return 'npm' if $run =~ /npm (?:install|ci)/;
             return 'pip' if $run =~ /pip install/;
-            return 'cargo' if $run =~ /cargo (build|test)/;
+            return 'cargo' if $run =~ /cargo (?:build|test)/;
             return 'bundler' if $run =~ /bundle install/;
         }
     }

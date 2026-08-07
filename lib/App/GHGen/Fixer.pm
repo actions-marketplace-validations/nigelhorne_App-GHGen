@@ -300,7 +300,7 @@ sub detect_and_create_cache_step($steps) {
         my $run = $step->{run} // '';
 
         # Node.js
-        if ($run =~ /npm (install|ci)/ || ($step->{uses} && $step->{uses} =~ /setup-node/)) {
+        if ($run =~ /npm (?:install|ci)/ || ($step->{uses} && $step->{uses} =~ /setup-node/)) {
             return {
                 name => 'Cache dependencies',
                 uses => 'actions/cache@v5',
@@ -326,7 +326,7 @@ sub detect_and_create_cache_step($steps) {
         }
 
         # Rust
-        if ($run =~ /cargo (build|test)/) {
+        if ($run =~ /cargo (?:build|test)/) {
             return {
                 name => 'Cache cargo',
                 uses => 'actions/cache@v5',
@@ -338,7 +338,7 @@ sub detect_and_create_cache_step($steps) {
         }
 
         # Go
-        if ($run =~ /go (build|test)/ || ($step->{uses} && $step->{uses} =~ /setup-go/)) {
+        if ($run =~ /go (?:build|test)/ || ($step->{uses} && $step->{uses} =~ /setup-go/)) {
             return {
                 name => 'Cache Go modules',
                 uses => 'actions/cache@v5',
@@ -363,7 +363,7 @@ sub fix_unpinned_actions($workflow) {
         for my $step (@$steps) {
             next unless $step->{uses};
 
-            if ($step->{uses} =~ /^(.+)\@(master|main)$/) {
+            if ($step->{uses} =~ /^(.+?)\@(?:master|main)$/) {
                 my $action = $1;
                 # Map to appropriate version
                 my $version = get_latest_version($action);
