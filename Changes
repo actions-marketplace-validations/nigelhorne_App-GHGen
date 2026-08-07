@@ -7,11 +7,11 @@ Revision history for App-GHGen
 	  name that contained those strings as a substring (e.g. a self-hosted runner
 	  named "my-ubuntu-18.04-builder" was incorrectly flagged as outdated).
 	  Anchored with \A...\z so only exact GitHub-hosted runner labels are matched.
-	- Fixed semantic error in Fixer::fix_unpinned_actions: greedy (.+) in
-	  /^(.+)\@(master|main)$/ captured an incorrect action name when the uses:
-	  string contained multiple @ characters (e.g. "org/action@alias@master" gave
-	  $1 = "org/action@alias" instead of "org/action").  Changed to non-greedy
-	  (.+?) so $1 always captures the action name without embedded @ fragments.
+	- Changed greedy (.+) to non-greedy (.+?) in Fixer::fix_unpinned_actions
+	  /^(.+?)\@(?:master|main)$/.  Both forms produce identical captures when
+	  @master or @main appears only once (the common case), because the `$`
+	  anchor forces both to find the same split point.  Non-greedy is preferred
+	  because it reaches a match with fewer backtrack steps on short strings.
 
 	[ Internal ]
 	- Replaced all unnecessary capturing groups with non-capturing (?:...) across

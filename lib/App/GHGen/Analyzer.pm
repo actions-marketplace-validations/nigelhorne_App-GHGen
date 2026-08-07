@@ -6,6 +6,7 @@ use strict;
 
 use YAML::XS qw(LoadFile);
 use Path::Tiny;
+use App::GHGen::Fixer qw(%ACTION_UPDATES);
 
 use Exporter 'import';
 our @EXPORT_OK = qw(
@@ -460,33 +461,22 @@ sub find_outdated_actions($workflow) {
 	my @outdated;
 	my $jobs = $workflow->{jobs} or return @outdated;
 
-    # Known outdated versions
-    my %updates = (
-        'actions/cache@v4' => 'actions/cache@v5',
-        'actions/cache@v3' => 'actions/cache@v5',
-        'actions/checkout@v5' => 'actions/checkout@v6',
-        'actions/checkout@v4' => 'actions/checkout@v6',
-        'actions/checkout@v3' => 'actions/checkout@v6',
-        'actions/setup-node@v3' => 'actions/setup-node@v4',
-        'actions/setup-python@v4' => 'actions/setup-python@v5',
-        'actions/setup-go@v4' => 'actions/setup-go@v5',
-    );
+	# Premise: %ACTION_UPDATES (from Fixer) is the single source of truth.
+	# Conclusion: every action this function flags can also be fixed by update_actions.
+	for my $job (values %$jobs) {
+		my $steps = $job->{steps} or next;
+		for my $step (@$steps) {
+			next unless $step->{uses};
+			my $uses = $step->{uses};
+			for my $old (keys %ACTION_UPDATES) {
+				if ($uses =~ /^\Q$old\E/) {
+					push @outdated, "$old → $ACTION_UPDATES{$old}";
+				}
+			}
+		}
+	}
 
-    for my $job (values %$jobs) {
-        my $steps = $job->{steps} or next;
-        for my $step (@$steps) {
-            next unless $step->{uses};
-            my $uses = $step->{uses};
-
-            for my $old (keys %updates) {
-                if ($uses =~ /^\Q$old\E/) {
-                    push @outdated, "$old → $updates{$old}";
-                }
-            }
-        }
-    }
-
-    return @outdated;
+	return @outdated;
 }
 
 sub has_deployment_steps($workflow) {
