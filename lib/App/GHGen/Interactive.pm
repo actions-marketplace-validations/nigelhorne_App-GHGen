@@ -91,8 +91,8 @@ Reads one line from STDIN; prints to STDOUT.
 
     answer ≔ chomp(readline(STDIN))
     result ≔
-        answer =~ /^y(es)?$/i → 1
-        answer =~ /^n(o)?$/i  → 0
+        answer =~ /^y(?:es)?$/i → 1
+        answer =~ /^n(?:o)?$/i  → 0
         answer = ""           → default = 'y' → 1  |  default = 'n' → 0
 
 =cut
