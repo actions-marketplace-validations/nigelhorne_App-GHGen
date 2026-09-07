@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Auto-generated mutant test stubs
-# Generated: 2026-08-10 16:09:20
+# Generated: 2026-08-29 18:36:17
 # Generator: scripts/test-generator-index
 #
 # DO NOT COMMIT without completing the TODO sections.
@@ -209,7 +209,7 @@ TODO: {
 # --- SURVIVORS (TODO stubs) ---
 
 # --- SURVIVOR: COND_INV_318_13 (MEDIUM) line 318 in add_caching() ---
-# Source:  if ($steps->[$i]->{uses} && $steps->[$i]->{uses} =~ /actions\/checkout/) {
+# Source:  for my $i (0 .. $#$steps) {
 # Hint:    Add tests asserting both true and false outcomes
 # Mutations on this line (1 variant):
 #   Invert condition if to unless
