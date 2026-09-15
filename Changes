@@ -7,6 +7,7 @@ Revision history for App-GHGen
 	[ Enhancements ]
 	- Install DB_File on Linux
 	- Latest ATG dashboard
+	- Updated to actions-setup-perl to 1.44.0
 
 0.09	Mon Aug 10 08:26:23 PM EDT 2026
 	[ Bug Fixes ]
